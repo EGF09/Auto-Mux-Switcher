@@ -1,0 +1,7 @@
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.exe
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.dll
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.deps.json
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.runtimeconfig.json
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.pdb
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\System.Management.dll
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\runtimes\win\lib\net10.0\System.Management.dll

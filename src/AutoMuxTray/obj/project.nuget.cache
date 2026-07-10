@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "qtcCP4sPS3k=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\LaxeL\\OneDrive\\Belgeler\\GitHub\\Auto-Mux-Switcher\\src\\AutoMuxTray\\AutoMuxTray.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\LaxeL\\.nuget\\packages\\system.management\\10.0.9\\system.management.10.0.9.nupkg.sha512"
+  ],
+  "logs": []
+}
