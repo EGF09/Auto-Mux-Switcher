@@ -1,4 +1,6 @@
 C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.exe
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\Resources\green_shield.ico
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\Resources\yellow_shield.ico
 C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.dll
 C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.deps.json
 C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\tray\AutoMuxTray.runtimeconfig.json

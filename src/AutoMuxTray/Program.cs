@@ -13,7 +13,7 @@ static class Program
     static void Main()
     {
         // Tek instance kontrolü
-        const string mutexName = "AutoMuxSwitcher_TrayApp_Mutex";
+        const string mutexName = "AutoMuxSwitcher_TrayApp_Mutex_v2";
         _mutex = new Mutex(true, mutexName, out bool createdNew);
 
         if (!createdNew)

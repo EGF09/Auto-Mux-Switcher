@@ -34,8 +34,9 @@ dotnet publish src/AutoMuxTray -c Release -o publish/tray
 
 ### 2. Windows Service Olarak Kur
 ```powershell
-# Yönetici PowerShell'de çalıştır
-sc.exe create AutoMuxSwitcher binPath="C:\tam\yol\publish\service\AutoMuxService.exe" start=auto
+# Yönetici PowerShell'i proje klasöründe (Auto-Mux-Switcher) açıp çalıştırın:
+$ServicePath = Join-Path $PWD "publish\service\AutoMuxService.exe"
+sc.exe create AutoMuxSwitcher binPath= $ServicePath start= auto
 sc.exe description AutoMuxSwitcher "Güç durumuna göre dGPU yönetimi - Auto MUX Switcher"
 sc.exe start AutoMuxSwitcher
 ```
@@ -46,8 +47,9 @@ Tray uygulamasının kullanıcı oturum açıldığında otomatik başlaması i�
 ```powershell
 # Başlangıç klasörüne kısayol oluştur
 $WshShell = New-Object -ComObject WScript.Shell
-$Shortcut = $WshShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\AutoMuxTray.lnk")
-$Shortcut.TargetPath = "C:\tam\yol\publish\tray\AutoMuxTray.exe"
+$ShortcutPath = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup\AutoMuxTray.lnk"
+$Shortcut = $WshShell.CreateShortcut($ShortcutPath)
+$Shortcut.TargetPath = Join-Path $PWD "publish\tray\AutoMuxTray.exe"
 $Shortcut.Save()
 ```
 

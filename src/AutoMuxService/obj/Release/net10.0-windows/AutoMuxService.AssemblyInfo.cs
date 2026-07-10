@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Auto MUX Switcher - Windows Service for automatic dGPU management based on power " +
     "state"))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b8ac15e7e8d11a74743dbe7719d90d6d2403381c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ee96cf9b3995b343161ab9057ec004ff41ca903f")]
 [assembly: System.Reflection.AssemblyProductAttribute("AutoMuxService")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AutoMuxService")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

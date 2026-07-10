@@ -27,7 +27,7 @@ public class TrayApplicationContext : ApplicationContext
 
         // Tray ikonunu oluştur
         _notifyIcon = new NotifyIcon();
-        _notifyIcon.Icon = SystemIcons.Shield;
+        _notifyIcon.Icon = GetTrayIcon(true);
         _notifyIcon.Text = "Auto MUX Switcher — dGPU Aktif";
         _notifyIcon.ContextMenuStrip = _contextMenu;
         _notifyIcon.Visible = true;
@@ -213,13 +213,13 @@ public class TrayApplicationContext : ApplicationContext
     {
         if (_isGpuEnabled)
         {
-            _notifyIcon.Icon = CreateTrayIcon(true);
+            _notifyIcon.Icon = GetTrayIcon(true);
             _notifyIcon.Text = $"Auto MUX Switcher — {_gpuName}: Aktif";
             _gpuMenuItem.Text = $"🟢 {_gpuName}: Aktif";
         }
         else
         {
-            _notifyIcon.Icon = CreateTrayIcon(false);
+            _notifyIcon.Icon = GetTrayIcon(false);
             _notifyIcon.Text = $"Auto MUX Switcher — {_gpuName}: Devre Dışı (Pil Tasarrufu)";
             _gpuMenuItem.Text = $"🟠 {_gpuName}: Devre Dışı";
         }
@@ -271,43 +271,29 @@ public class TrayApplicationContext : ApplicationContext
         Application.Exit();
     }
 
-    // Win32 API - Icon handle'ı serbest bırakmak için
-    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-    private static extern bool DestroyIcon(IntPtr handle);
-
     /// <summary>
-    /// Basit bir tray ikonu oluşturur (programatik olarak).
-    /// Yeşil = GPU aktif, Turuncu = GPU devre dışı
+    /// Dosyadan tray ikonunu yükler.
+    /// Yeşil = GPU aktif, Sarı/Turuncu = GPU devre dışı
     /// </summary>
-    private static Icon CreateTrayIcon(bool gpuEnabled)
+    private static Icon GetTrayIcon(bool gpuEnabled)
     {
-        var size = 16; // Tray standart boyut
-        using var bitmap = new Bitmap(size, size);
-        using var graphics = Graphics.FromImage(bitmap);
-        graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-        graphics.Clear(Color.Transparent);
+        try
+        {
+            string iconFileName = gpuEnabled ? "green_shield.ico" : "yellow_shield.ico";
+            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", iconFileName);
 
-        // Arka plan daire
-        var bgColor = gpuEnabled
-            ? Color.FromArgb(34, 180, 34)   // Yeşil
-            : Color.FromArgb(255, 140, 0);  // Turuncu
-
-        using var bgBrush = new SolidBrush(bgColor);
-        graphics.FillEllipse(bgBrush, 0, 0, size - 1, size - 1);
-
-        // "G" harfi
-        using var font = new Font("Segoe UI", 8, FontStyle.Bold);
-        using var textBrush = new SolidBrush(Color.White);
-        var textSize = graphics.MeasureString("G", font);
-        var x = (size - textSize.Width) / 2;
-        var y = (size - textSize.Height) / 2;
-        graphics.DrawString("G", font, textBrush, x, y);
-
-        // Icon oluştur ve handle'ı düzgün yönet
-        var hIcon = bitmap.GetHicon();
-        var icon = (Icon)Icon.FromHandle(hIcon).Clone(); // Clone ile kopyasını al
-        DestroyIcon(hIcon); // Orijinal handle'ı serbest bırak
-        return icon;
+            if (File.Exists(iconPath))
+            {
+                return new Icon(iconPath);
+            }
+            
+            // İkon bulunamazsa varsayılanı kullan
+            return SystemIcons.Shield;
+        }
+        catch
+        {
+            return SystemIcons.Shield;
+        }
     }
 
     protected override void Dispose(bool disposing)
