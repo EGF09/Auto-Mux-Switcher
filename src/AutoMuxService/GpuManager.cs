@@ -199,15 +199,41 @@ public class GpuManager
 
     /// <summary>
     /// GPU'nun entegre (iGPU) veya yazılımsal adaptör olup olmadığını kontrol eder.
+    /// Intel UHD/Iris ve AMD Radeon entegre (APU) GPU'larını tanır.
     /// </summary>
     private static bool IsIntegratedGpu(string name, string vendor)
     {
         var lowerName = name.ToLowerInvariant();
         var lowerVendor = vendor.ToLowerInvariant();
 
-        // Intel iGPU'lar
+        // Intel iGPU'lar (Intel UHD, Intel Iris, vb.)
         if (lowerVendor.Contains("intel") || lowerName.Contains("intel"))
             return true;
+
+        // AMD APU entegre GPU'lar
+        // AMD Radeon(TM) Graphics, AMD Radeon Graphics, AMD Radeon Vega gibi isimler
+        // NOT: AMD Radeon RX, Radeon Pro gibi discrete kartları HARİÇ tutmalıyız
+        if (lowerVendor.Contains("amd") || lowerVendor.Contains("advanced micro"))
+        {
+            // Kesin discrete GPU isimleri — bunlar iGPU DEĞİL
+            if (lowerName.Contains("radeon rx") ||
+                lowerName.Contains("radeon pro") ||
+                lowerName.Contains("radeon r5") ||
+                lowerName.Contains("radeon r7") ||
+                lowerName.Contains("radeon r9") ||
+                lowerName.Contains("radeon vii") ||
+                lowerName.Contains("instinct"))
+                return false;
+
+            // "AMD Radeon(TM) Graphics" veya "AMD Radeon Graphics" → APU iGPU
+            if (lowerName.Contains("radeon") && lowerName.Contains("graphics") &&
+                !lowerName.Contains("rx") && !lowerName.Contains("pro"))
+                return true;
+
+            // Radeon Vega entegre (Ryzen APU) 
+            if (lowerName.Contains("vega") && !lowerName.Contains("vega frontier"))
+                return true;
+        }
 
         // Microsoft Basic Display Adapter (yazılımsal)
         if (lowerName.Contains("microsoft basic") || lowerName.Contains("basic display"))

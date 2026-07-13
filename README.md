@@ -17,7 +17,7 @@ Laptop fişten çıkarıldığında/takıldığında **dGPU'yu otomatik olarak d
 | Bileşen | Konum | Görev |
 |---------|-------|-------|
 | **AutoMuxService** | `src/AutoMuxService/` | Windows Service — Güç izleme, GPU yönetimi |
-| **AutoMuxTray** | `src/AutoMuxTray/` | System Tray — Kullanıcı bildirimi ve etkileşim |
+| **AutoMuxTray** | `src/AutoMuxTray/` | System Tray — Kullanıcı bildirimi, GPU durum izleme |
 
 ## 🚀 Kurulum
 
@@ -26,13 +26,39 @@ Laptop fişten çıkarıldığında/takıldığında **dGPU'yu otomatik olarak d
 - .NET 10 Runtime
 - Yönetici (Administrator) yetkileri
 
-### 1. Projeyi Derle
+### Kolay Kurulum (Önerilen)
+
+1. **Projeyi Derle**
 ```powershell
 dotnet publish src/AutoMuxService -c Release -o publish/service
 dotnet publish src/AutoMuxTray -c Release -o publish/tray
 ```
 
-### 2. Windows Service Olarak Kur
+2. **install.bat'ı Yönetici olarak çalıştır**
+```
+install.bat → Sağ tık → Yönetici olarak çalıştır
+```
+
+Bu script otomatik olarak:
+- Dosyaları `C:\Program Files\AutoMuxSwitcher\` altına kopyalar
+- Windows Service'i oluşturur ve başlatır (otomatik başlatma)
+- Tray uygulamasını Windows başlangıcına ekler
+- Her ikisini de hemen çalıştırır
+
+> **Not:** Bilgisayar yeniden başlatıldığında Service ve Tray uygulaması otomatik olarak başlar.
+
+### Manuel Kurulum
+
+<details>
+<summary>Manuel kurulum adımları (gelişmiş kullanıcılar için)</summary>
+
+#### 1. Projeyi Derle
+```powershell
+dotnet publish src/AutoMuxService -c Release -o publish/service
+dotnet publish src/AutoMuxTray -c Release -o publish/tray
+```
+
+#### 2. Windows Service Olarak Kur
 ```powershell
 # Yönetici PowerShell'i proje klasöründe (Auto-Mux-Switcher) açıp çalıştırın:
 $ServicePath = Join-Path $PWD "publish\service\AutoMuxService.exe"
@@ -41,9 +67,7 @@ sc.exe description AutoMuxSwitcher "Güç durumuna göre dGPU yönetimi - Auto M
 sc.exe start AutoMuxSwitcher
 ```
 
-### 3. Tray Uygulamasını Başlangıça Ekle
-Tray uygulamasının kullanıcı oturum açıldığında otomatik başlaması için:
-
+#### 3. Tray Uygulamasını Başlangıça Ekle
 ```powershell
 # Başlangıç klasörüne kısayol oluştur
 $WshShell = New-Object -ComObject WScript.Shell
@@ -53,7 +77,22 @@ $Shortcut.TargetPath = Join-Path $PWD "publish\tray\AutoMuxTray.exe"
 $Shortcut.Save()
 ```
 
+</details>
+
 ## 🗑️ Kaldırma
+
+### Kolay Kaldırma (Önerilen)
+
+```
+uninstall.bat → Sağ tık → Yönetici olarak çalıştır
+```
+
+Bu script otomatik olarak Service'i, başlangıç kısayolunu, kurulum dosyalarını ve Registry kayıtlarını temizler.
+
+### Manuel Kaldırma
+
+<details>
+<summary>Manuel kaldırma adımları</summary>
 
 ```powershell
 # Yönetici PowerShell'de
@@ -65,15 +104,21 @@ Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\AutoMuxT
 
 # Registry'yi temizle
 Remove-Item "HKLM:\SOFTWARE\AutoMuxSwitcher" -ErrorAction SilentlyContinue
+
+# Kurulum dosyalarını sil (install.bat ile kurulduysa)
+Remove-Item "C:\Program Files\AutoMuxSwitcher" -Recurse -Force
 ```
+
+</details>
 
 ## ⚙️ Teknik Detaylar
 
 - **Güç İzleme**: WMI (`Win32_PowerManagementEvent`) + P/Invoke polling (5 sn)
 - **GPU Kontrolü**: `pnputil.exe /disable-device` ve `/enable-device`
-- **IPC**: Named Pipes (`AutoMuxSwitcherPipe`)
+- **GPU Durum İzleme**: WMI (`Win32_VideoController` + `Win32_PnPEntity`) — 30 sn periyodik kontrol
+- **IPC**: Named Pipes (`AutoMuxSwitcherPipe`) — retry mekanizmalı
 - **Durum Saklama**: Windows Registry (`HKLM\SOFTWARE\AutoMuxSwitcher`)
-- **GPU Algılama**: WMI (`Win32_VideoController`) — NVIDIA/AMD otomatik algılama
+- **GPU Algılama**: WMI — NVIDIA/AMD otomatik algılama (devre dışı dahil)
 
 ## 📝 Lisans
 

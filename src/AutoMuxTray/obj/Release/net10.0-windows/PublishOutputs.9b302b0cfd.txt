@@ -1,0 +1,9 @@
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\AutoMuxTray.exe
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\Resources\green_shield.ico
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\Resources\yellow_shield.ico
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\AutoMuxTray.dll
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\AutoMuxTray.deps.json
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\AutoMuxTray.runtimeconfig.json
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\AutoMuxTray.pdb
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\System.Management.dll
+C:\Users\LaxeL\Desktop\AutoMuxSwitcher_Release\tray\runtimes\win\lib\net10.0\System.Management.dll

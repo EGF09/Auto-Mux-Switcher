@@ -5,12 +5,14 @@ namespace AutoMuxTray;
 /// <summary>
 /// System Tray uygulaması ana context sınıfı.
 /// Tray ikonu, sağ tık menüsü ve Service ile iletişimi yönetir.
+/// GpuStatusChecker ile doğrudan GPU durumunu izler.
 /// </summary>
 public class TrayApplicationContext : ApplicationContext
 {
     private readonly NotifyIcon _notifyIcon;
     private readonly PipeClient _pipeClient;
     private readonly NotificationManager _notificationManager;
+    private readonly GpuStatusChecker _gpuStatusChecker;
     private readonly ContextMenuStrip _contextMenu;
     private ToolStripMenuItem _statusMenuItem = null!;
     private ToolStripMenuItem _gpuMenuItem = null!;
@@ -21,6 +23,7 @@ public class TrayApplicationContext : ApplicationContext
     {
         _pipeClient = new PipeClient();
         _notificationManager = new NotificationManager();
+        _gpuStatusChecker = new GpuStatusChecker();
 
         // Sağ tık menüsünü oluştur
         _contextMenu = CreateContextMenu();
@@ -28,15 +31,38 @@ public class TrayApplicationContext : ApplicationContext
         // Tray ikonunu oluştur
         _notifyIcon = new NotifyIcon();
         _notifyIcon.Icon = GetTrayIcon(true);
-        _notifyIcon.Text = "Auto MUX Switcher — dGPU Aktif";
+        _notifyIcon.Text = "Auto MUX Switcher — Yükleniyor...";
         _notifyIcon.ContextMenuStrip = _contextMenu;
         _notifyIcon.Visible = true;
 
         _notifyIcon.DoubleClick += OnTrayIconDoubleClick;
 
+        // GPU durum izleyicisini başlat
+        _gpuStatusChecker.StatusChanged += OnGpuStatusChanged;
+        _gpuStatusChecker.Start();
+
+        // İlk GPU durumuna göre Tray'i güncelle
+        _isGpuEnabled = _gpuStatusChecker.IsGpuEnabled;
+        _gpuName = _gpuStatusChecker.DgpuName ?? "dGPU";
+        UpdateTrayState();
+
         // Pipe istemcisini başlat
         _pipeClient.MessageReceived += OnServiceMessageReceived;
         _pipeClient.StartListening();
+
+        // Service'den durum bilgisi iste (ek senkronizasyon)
+        _ = RequestStatusAsync();
+    }
+
+    /// <summary>
+    /// GPU durum izleyicisinden gelen güncelleme.
+    /// WMI'dan doğrudan okunan gerçek GPU durumu.
+    /// </summary>
+    private void OnGpuStatusChanged(object? sender, GpuStatusEventArgs e)
+    {
+        _gpuName = e.GpuName;
+        _isGpuEnabled = e.IsEnabled;
+        UpdateTrayState();
     }
 
     /// <summary>
@@ -64,7 +90,7 @@ public class TrayApplicationContext : ApplicationContext
 
         // Durum sorgula
         var refreshItem = new ToolStripMenuItem("🔄 Durumu Güncelle");
-        refreshItem.Click += async (s, e) => await RequestStatusAsync();
+        refreshItem.Click += OnRefreshClick;
         menu.Items.Add(refreshItem);
 
         menu.Items.Add(new ToolStripSeparator());
@@ -75,6 +101,21 @@ public class TrayApplicationContext : ApplicationContext
         menu.Items.Add(exitItem);
 
         return menu;
+    }
+
+    /// <summary>
+    /// Durumu güncelle butonuna tıklandığında hem WMI hem Service'den güncelle.
+    /// </summary>
+    private async void OnRefreshClick(object? sender, EventArgs e)
+    {
+        // Önce WMI'dan doğrudan kontrol et
+        _gpuStatusChecker.RefreshGpuStatus();
+        _isGpuEnabled = _gpuStatusChecker.IsGpuEnabled;
+        _gpuName = _gpuStatusChecker.DgpuName ?? "dGPU";
+        UpdateTrayState();
+
+        // Service'den de iste
+        await RequestStatusAsync();
     }
 
     /// <summary>
@@ -165,6 +206,7 @@ public class TrayApplicationContext : ApplicationContext
 
     /// <summary>
     /// İşlem sonucu mesajını işler.
+    /// GPU değişikliği sonrası durumu WMI'dan da doğrula.
     /// </summary>
     private void HandleResult(string[] parts)
     {
@@ -180,6 +222,16 @@ public class TrayApplicationContext : ApplicationContext
 
             UpdateTrayState();
             _notificationManager.ShowResultNotification(_notifyIcon, true, isEnabled);
+
+            // Kısa bir gecikme sonrası WMI'dan doğrula
+            var verifyTimer = new System.Windows.Forms.Timer { Interval = 3000 };
+            verifyTimer.Tick += (s, e) =>
+            {
+                verifyTimer.Stop();
+                verifyTimer.Dispose();
+                _gpuStatusChecker.RefreshGpuStatus();
+            };
+            verifyTimer.Start();
         }
         else if (resultType == "ERROR")
         {
@@ -238,6 +290,11 @@ public class TrayApplicationContext : ApplicationContext
     /// </summary>
     private void OnGpuMenuItemClick(object? sender, EventArgs e)
     {
+        // Güncel WMI durumunu kontrol et
+        _gpuStatusChecker.RefreshGpuStatus();
+        _isGpuEnabled = _gpuStatusChecker.IsGpuEnabled;
+        UpdateTrayState();
+
         var statusText = _isGpuEnabled
             ? $"Ekran Kartı: {_gpuName}\nDurum: Aktif ✅\n\nGPU performans modunda çalışıyor."
             : $"Ekran Kartı: {_gpuName}\nDurum: Devre Dışı 🔋\n\nPil tasarrufu modunda çalışıyor.";
@@ -252,10 +309,15 @@ public class TrayApplicationContext : ApplicationContext
     }
 
     /// <summary>
-    /// Tray ikonuna çift tıklandığında durum sorgular.
+    /// Tray ikonuna çift tıklandığında durumu günceller.
     /// </summary>
     private async void OnTrayIconDoubleClick(object? sender, EventArgs e)
     {
+        _gpuStatusChecker.RefreshGpuStatus();
+        _isGpuEnabled = _gpuStatusChecker.IsGpuEnabled;
+        _gpuName = _gpuStatusChecker.DgpuName ?? "dGPU";
+        UpdateTrayState();
+
         await RequestStatusAsync();
     }
 
@@ -264,6 +326,8 @@ public class TrayApplicationContext : ApplicationContext
     /// </summary>
     private void OnExitClick(object? sender, EventArgs e)
     {
+        _gpuStatusChecker.Stop();
+        _gpuStatusChecker.Dispose();
         _pipeClient.StopListening();
         _pipeClient.Dispose();
         _notifyIcon.Visible = false;
@@ -300,6 +364,7 @@ public class TrayApplicationContext : ApplicationContext
     {
         if (disposing)
         {
+            _gpuStatusChecker.Dispose();
             _pipeClient.Dispose();
             _notifyIcon.Dispose();
             _contextMenu.Dispose();
