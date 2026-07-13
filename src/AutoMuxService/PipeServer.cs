@@ -1,4 +1,6 @@
 using System.IO.Pipes;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 
 namespace AutoMuxService;
@@ -49,16 +51,39 @@ public class PipeServer : IDisposable
     /// Tray uygulamasına mesaj gönderir.
     /// Yeni bir pipe bağlantısı oluşturur ve mesajı yazar.
     /// </summary>
+    private PipeSecurity CreatePipeSecurity()
+    {
+        var pipeSecurity = new PipeSecurity();
+        pipeSecurity.AddAccessRule(new PipeAccessRule(
+            new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null),
+            PipeAccessRights.ReadWrite,
+            AccessControlType.Allow));
+        pipeSecurity.AddAccessRule(new PipeAccessRule(
+            new SecurityIdentifier(WellKnownSidType.CreatorOwnerSid, null),
+            PipeAccessRights.FullControl,
+            AccessControlType.Allow));
+        pipeSecurity.AddAccessRule(new PipeAccessRule(
+            new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null),
+            PipeAccessRights.FullControl,
+            AccessControlType.Allow));
+        return pipeSecurity;
+    }
+
     public async Task SendMessageAsync(string message)
     {
         try
         {
             // Bildirim göndermek için yeni bir pipe instance oluştur
-            using var pipeServer = new NamedPipeServerStream(
+#pragma warning disable CA1416 // Validate platform compatibility
+            using var pipeServer = NamedPipeServerStreamAcl.Create(
                 PipeName + "_Notify",
                 PipeDirection.Out,
                 NamedPipeServerStream.MaxAllowedServerInstances,
-                PipeTransmissionMode.Message);
+                PipeTransmissionMode.Message,
+                PipeOptions.Asynchronous,
+                0, 0,
+                CreatePipeSecurity());
+#pragma warning restore CA1416
 
             _logger.LogDebug("Tray uygulaması bağlantısı bekleniyor (bildirim)...");
 
@@ -66,11 +91,21 @@ public class PipeServer : IDisposable
             using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
             await pipeServer.WaitForConnectionAsync(timeoutCts.Token);
 
-            var bytes = Encoding.UTF8.GetBytes(message);
-            await pipeServer.WriteAsync(bytes);
-            await pipeServer.FlushAsync();
+            try
+            {
+                var bytes = Encoding.UTF8.GetBytes(message);
+                await pipeServer.WriteAsync(bytes);
+                await pipeServer.FlushAsync();
 
-            _logger.LogDebug("Mesaj gönderildi: {Message}", message);
+                _logger.LogDebug("Mesaj gönderildi: {Message}", message);
+            }
+            finally
+            {
+                if (pipeServer.IsConnected)
+                {
+                    pipeServer.Disconnect();
+                }
+            }
         }
         catch (OperationCanceledException)
         {
@@ -91,31 +126,51 @@ public class PipeServer : IDisposable
         {
             try
             {
-                using var pipeServer = new NamedPipeServerStream(
+#pragma warning disable CA1416 // Validate platform compatibility
+                using var pipeServer = NamedPipeServerStreamAcl.Create(
                     PipeName,
                     PipeDirection.In,
                     NamedPipeServerStream.MaxAllowedServerInstances,
-                    PipeTransmissionMode.Message);
+                    PipeTransmissionMode.Message,
+                    PipeOptions.Asynchronous,
+                    0, 0,
+                    CreatePipeSecurity());
+#pragma warning restore CA1416
 
                 _logger.LogDebug("Tray uygulaması bağlantısı bekleniyor...");
                 await pipeServer.WaitForConnectionAsync(cancellationToken);
 
-                // Mesajı oku
-                var buffer = new byte[1024];
-                var bytesRead = await pipeServer.ReadAsync(buffer, cancellationToken);
-
-                if (bytesRead > 0)
+                try
                 {
-                    var message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    _logger.LogDebug("Mesaj alındı: {Message}", message);
+                    // Mesajı oku
+                    var buffer = new byte[1024];
+                    var bytesRead = await pipeServer.ReadAsync(buffer, cancellationToken);
 
-                    MessageReceived?.Invoke(this, new PipeMessageEventArgs(message));
+                    if (bytesRead > 0)
+                    {
+                        var message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                        _logger.LogDebug("Mesaj alındı: {Message}", message);
+
+                        MessageReceived?.Invoke(this, new PipeMessageEventArgs(message));
+                    }
+                }
+                finally
+                {
+                    if (pipeServer.IsConnected)
+                    {
+                        pipeServer.Disconnect();
+                    }
                 }
             }
             catch (OperationCanceledException)
             {
                 // Normal kapanış
                 break;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Pipe oluşturma sırasında erişim reddedildi. Muhtemelen AutoMuxService zaten başka bir kullanıcı/oturum altında çalışıyor.");
+                await Task.Delay(5000, cancellationToken);
             }
             catch (Exception ex)
             {

@@ -69,6 +69,19 @@ if ($existingService) {
     Write-Host "[2/6] Mevcut service bulunamadi (yeni kurulum)." -ForegroundColor Gray
 }
 
+# Eski isimle kalmis service'leri de temizle (Kalıntı temizligi)
+$legacyServiceName = "AutoMuxSwitcherService"
+$legacyService = Get-Service -Name $legacyServiceName -ErrorAction SilentlyContinue
+if ($legacyService) {
+    Write-Host "       Eski surumden kalan kalinti service ($legacyServiceName) temizleniyor..." -ForegroundColor Yellow
+    if ($legacyService.Status -eq "Running") {
+        sc.exe stop $legacyServiceName | Out-Null
+        Start-Sleep -Seconds 3
+    }
+    sc.exe delete $legacyServiceName | Out-Null
+    Start-Sleep -Seconds 2
+}
+
 # 3. Kurulum dizinlerini olustur
 Write-Host "[3/6] Kurulum dizini hazirlaniyor..." -ForegroundColor White
 
