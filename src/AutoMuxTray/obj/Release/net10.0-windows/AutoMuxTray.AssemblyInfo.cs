@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Auto MUX Switcher - System Tray application for user notifications")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d4ab7ae05f6eabc6c6445bb15222b03b9e7668cb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d1abd9edde0193ec5cf9f16d2d6aebb615870cae")]
 [assembly: System.Reflection.AssemblyProductAttribute("AutoMuxTray")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AutoMuxTray")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

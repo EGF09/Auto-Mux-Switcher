@@ -1,0 +1,49 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "AutoMuxSetup/1.0.0": {
+        "dependencies": {
+          "System.ServiceProcess.ServiceController": "10.0.9"
+        },
+        "runtime": {
+          "AutoMuxSetup.dll": {}
+        }
+      },
+      "System.ServiceProcess.ServiceController/10.0.9": {
+        "runtime": {
+          "lib/net10.0/System.ServiceProcess.ServiceController.dll": {
+            "assemblyVersion": "10.0.0.9",
+            "fileVersion": "10.0.926.27113"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net10.0/System.ServiceProcess.ServiceController.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "10.0.0.9",
+            "fileVersion": "10.0.926.27113"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "AutoMuxSetup/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.ServiceProcess.ServiceController/10.0.9": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-VaYklIT689DthcRzbqt3S8z3GkymiD+US+RLzMFfoPxNIyUxMpXT116cO6rVrKHSuwgdvb35HRKN/PmDmbL+3g==",
+      "path": "system.serviceprocess.servicecontroller/10.0.9",
+      "hashPath": "system.serviceprocess.servicecontroller.10.0.9.nupkg.sha512"
+    }
+  }
+}

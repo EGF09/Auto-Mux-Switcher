@@ -2,5 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/AutoMuxService/AutoMuxService.csproj" />
     <Project Path="src/AutoMuxTray/AutoMuxTray.csproj" />
+    <Project Path="src/AutoMuxSetup/AutoMuxSetup.csproj" />
   </Folder>
 </Solution>

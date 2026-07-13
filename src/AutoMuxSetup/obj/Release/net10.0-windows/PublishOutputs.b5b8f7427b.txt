@@ -1,0 +1,7 @@
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\setup\AutoMuxSetup.exe
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\setup\AutoMuxSetup.dll
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\setup\AutoMuxSetup.deps.json
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\setup\AutoMuxSetup.runtimeconfig.json
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\setup\AutoMuxSetup.pdb
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\setup\System.ServiceProcess.ServiceController.dll
+C:\Users\LaxeL\OneDrive\Belgeler\GitHub\Auto-Mux-Switcher\publish\setup\runtimes\win\lib\net10.0\System.ServiceProcess.ServiceController.dll

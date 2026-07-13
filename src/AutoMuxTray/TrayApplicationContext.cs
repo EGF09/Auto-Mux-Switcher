@@ -16,6 +16,7 @@ public class TrayApplicationContext : ApplicationContext
     private readonly ContextMenuStrip _contextMenu;
     private ToolStripMenuItem _statusMenuItem = null!;
     private ToolStripMenuItem _gpuMenuItem = null!;
+    private ToolStripMenuItem _toggleGpuMenuItem = null!;
     private bool _isGpuEnabled = true;
     private string _gpuName = "dGPU";
 
@@ -85,6 +86,11 @@ public class TrayApplicationContext : ApplicationContext
         _gpuMenuItem = new ToolStripMenuItem("🟢 dGPU: Aktif");
         _gpuMenuItem.Click += OnGpuMenuItemClick;
         menu.Items.Add(_gpuMenuItem);
+
+        // Manuel dGPU aç/kapat
+        _toggleGpuMenuItem = new ToolStripMenuItem("🔌 dGPU'yu Devre Dışı Bırak");
+        _toggleGpuMenuItem.Click += OnToggleGpuClick;
+        menu.Items.Add(_toggleGpuMenuItem);
 
         menu.Items.Add(new ToolStripSeparator());
 
@@ -268,12 +274,14 @@ public class TrayApplicationContext : ApplicationContext
             _notifyIcon.Icon = GetTrayIcon(true);
             _notifyIcon.Text = $"Auto MUX Switcher — {_gpuName}: Aktif";
             _gpuMenuItem.Text = $"🟢 {_gpuName}: Aktif";
+            _toggleGpuMenuItem.Text = $"⛔ {_gpuName}'yu Devre Dışı Bırak";
         }
         else
         {
             _notifyIcon.Icon = GetTrayIcon(false);
             _notifyIcon.Text = $"Auto MUX Switcher — {_gpuName}: Devre Dışı (Pil Tasarrufu)";
             _gpuMenuItem.Text = $"🟠 {_gpuName}: Devre Dışı";
+            _toggleGpuMenuItem.Text = $"🔌 {_gpuName}'yu Etkinleştir";
         }
     }
 
@@ -306,6 +314,54 @@ public class TrayApplicationContext : ApplicationContext
             MessageBoxIcon.Information,
             MessageBoxDefaultButton.Button1,
             MessageBoxOptions.DefaultDesktopOnly);
+    }
+
+    /// <summary>
+    /// Manuel dGPU aç/kapat butonuna tıklandığında çalışır.
+    /// Fişi takmadan dGPU'yu etkinleştirmeye veya devre dışı bırakmaya izin verir.
+    /// </summary>
+    private async void OnToggleGpuClick(object? sender, EventArgs e)
+    {
+        // Önce güncel durumu kontrol et
+        _gpuStatusChecker.RefreshGpuStatus();
+        _isGpuEnabled = _gpuStatusChecker.IsGpuEnabled;
+        UpdateTrayState();
+
+        if (_isGpuEnabled)
+        {
+            // dGPU aktif → devre dışı bırakmak istiyor
+            var result = MessageBox.Show(
+                $"{_gpuName} devre dışı bırakılsın mı?\n\n" +
+                "GPU kapatılarak pil tasarrufu sağlanır.\n" +
+                "Tekrar açmak için bu menüyü kullanabilirsiniz.",
+                "Auto MUX Switcher — dGPU Kapat",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button2,
+                MessageBoxOptions.DefaultDesktopOnly);
+
+            if (result == DialogResult.Yes)
+            {
+                await _pipeClient.SendMessageAsync("RESPONSE:YES:DISABLE");
+            }
+        }
+        else
+        {
+            // dGPU devre dışı → etkinleştirmek istiyor
+            var result = MessageBox.Show(
+                $"{_gpuName} etkinleştirilsin mi?\n\n" +
+                "GPU açılarak tam performans sağlanır.",
+                "Auto MUX Switcher — dGPU Aç",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button1,
+                MessageBoxOptions.DefaultDesktopOnly);
+
+            if (result == DialogResult.Yes)
+            {
+                await _pipeClient.SendMessageAsync("RESPONSE:YES:ENABLE");
+            }
+        }
     }
 
     /// <summary>
