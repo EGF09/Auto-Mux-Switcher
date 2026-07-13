@@ -18,6 +18,7 @@ Laptop fişten çıkarıldığında/takıldığında **dGPU'yu otomatik olarak d
 |---------|-------|-------|
 | **AutoMuxService** | `src/AutoMuxService/` | Windows Service — Güç izleme, GPU yönetimi |
 | **AutoMuxTray** | `src/AutoMuxTray/` | System Tray — Kullanıcı bildirimi, GPU durum izleme |
+| **AutoMuxSetup** | `src/AutoMuxSetup/` | Kurulum Aracı — Yükle, Onar, Kaldır (WinForms GUI) |
 
 ### Desteklenen GPU'lar
 - **NVIDIA** (GeForce, Quadro, RTX serisi)
@@ -34,26 +35,41 @@ Laptop fişten çıkarıldığında/takıldığında **dGPU'yu otomatik olarak d
 ### Kolay Kurulum (Önerilen)
 
 1. **Projeyi Derle**
-```powershell
-dotnet publish src/AutoMuxService -c Release -o publish/service
-dotnet publish src/AutoMuxTray -c Release -o publish/tray
-```
+   ```powershell
+   dotnet publish src/AutoMuxService -c Release -o publish/service
+   dotnet publish src/AutoMuxTray -c Release -o publish/tray
+   dotnet publish src/AutoMuxSetup -c Release -o publish/setup
+   ```
 
-2. **install.bat'ı Yönetici olarak çalıştır**
-```
-install.bat → Sağ tık → Yönetici olarak çalıştır
-```
+2. **`AutoMuxSetup.exe`'yi çalıştır**
+   ```
+   publish/setup/AutoMuxSetup.exe → Çift tık (otomatik yönetici izni ister)
+   ```
 
-Bu script otomatik olarak:
+3. **"YÜKLE" butonuna tıkla**
+
+   Setup aracı `publish/` dizinindeki `service/` ve `tray/` klasörlerini otomatik olarak bulur ve kurulumu gerçekleştirir.
+
+Kurulum sırasında otomatik olarak:
 - Eski kurulumu algılar ve temizler
 - Dosyaları `C:\Program Files\AutoMuxSwitcher\` altına kopyalar
 - Windows Service'i oluşturur ve başlatır (otomatik başlatma)
 - Service hata kurtarma politikası ayarlar (otomatik yeniden başlatma)
 - Tray uygulamasını Windows başlangıcına ekler
 - Her ikisini de hemen çalıştırır
-- Sonunda doğrulama raporu gösterir
+- Sonunda doğrulama yapar ve sonucu raporlar
 
 > **Not:** Bilgisayar yeniden başlatıldığında Service ve Tray uygulaması otomatik olarak başlar.
+
+### Setup Aracı Özellikleri
+
+| Buton | İşlev |
+|-------|-------|
+| **⬇ YÜKLE** | Tam kurulum yapar. Eski kurulum varsa önce temizler, sonra yeniden kurar. |
+| **🔧 ONAR** | Mevcut kurulumu onarır — dosyaları günceller, servisi yeniden başlatır. |
+| **✖ KALDIR** | Uygulamayı sistemden tamamen kaldırır. |
+
+Setup aracı koyu temalı modern bir arayüze sahiptir ve işlem ilerleme çubuğu ile detaylı log çıktısı gösterir.
 
 ### Manuel Kurulum
 
@@ -91,11 +107,9 @@ $Shortcut.Save()
 
 ### Kolay Kaldırma (Önerilen)
 
-```
-uninstall.bat → Sağ tık → Yönetici olarak çalıştır
-```
+`AutoMuxSetup.exe`'yi çalıştır → **"KALDIR"** butonuna tıkla.
 
-Bu script **yalnızca** kurulum dosyalarını kaldırır:
+Setup aracı **yalnızca** kurulum dosyalarını kaldırır:
 - `C:\Program Files\AutoMuxSwitcher\` dizinini siler
 - Windows Service'i kaldırır
 - Başlangıç kısayolunu siler
@@ -129,18 +143,16 @@ Remove-Item "C:\Program Files\AutoMuxSwitcher" -Recurse -Force
 
 ```
 Auto-Mux-Switcher/
-├── install.bat          # Kurulum başlatıcı (→ install.ps1)
-├── install.ps1          # Kurulum scripti (PowerShell)
-├── uninstall.bat        # Kaldırma başlatıcı (→ uninstall.ps1)
-├── uninstall.ps1        # Kaldırma scripti (PowerShell)
 ├── README.md
 ├── AutoMuxSwitcher.slnx
 ├── src/
 │   ├── AutoMuxService/  # Windows Service kaynak kodu
-│   └── AutoMuxTray/     # System Tray kaynak kodu
+│   ├── AutoMuxTray/     # System Tray kaynak kodu
+│   └── AutoMuxSetup/    # Kurulum Aracı kaynak kodu (WinForms)
 └── publish/
     ├── service/         # Derlenmiş Service dosyaları
-    └── tray/            # Derlenmiş Tray dosyaları
+    ├── tray/            # Derlenmiş Tray dosyaları
+    └── setup/           # Derlenmiş Setup dosyaları
 ```
 
 ## ⚙️ Teknik Detaylar
@@ -151,6 +163,7 @@ Auto-Mux-Switcher/
 - **IPC**: Named Pipes (`AutoMuxSwitcherPipe`) — 3 denemeye kadar yeniden deneme
 - **Durum Saklama**: Windows Registry (`HKLM\SOFTWARE\AutoMuxSwitcher`)
 - **GPU Algılama**: WMI — NVIDIA/AMD otomatik algılama (Intel ve AMD APU iGPU atlanır)
+- **Kurulum Aracı**: WinForms GUI — `sc.exe` ile Service yönetimi, PowerShell COM ile kısayol oluşturma
 
 ## 📝 Lisans
 
