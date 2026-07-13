@@ -19,6 +19,11 @@ Laptop fişten çıkarıldığında/takıldığında **dGPU'yu otomatik olarak d
 | **AutoMuxService** | `src/AutoMuxService/` | Windows Service — Güç izleme, GPU yönetimi |
 | **AutoMuxTray** | `src/AutoMuxTray/` | System Tray — Kullanıcı bildirimi, GPU durum izleme |
 
+### Desteklenen GPU'lar
+- **NVIDIA** (GeForce, Quadro, RTX serisi)
+- **AMD** discrete (Radeon RX, Radeon Pro serisi)
+- AMD Radeon entegre (APU) ve Intel iGPU otomatik olarak atlanır
+
 ## 🚀 Kurulum
 
 ### Gereksinimler
@@ -40,10 +45,13 @@ install.bat → Sağ tık → Yönetici olarak çalıştır
 ```
 
 Bu script otomatik olarak:
+- Eski kurulumu algılar ve temizler
 - Dosyaları `C:\Program Files\AutoMuxSwitcher\` altına kopyalar
 - Windows Service'i oluşturur ve başlatır (otomatik başlatma)
+- Service hata kurtarma politikası ayarlar (otomatik yeniden başlatma)
 - Tray uygulamasını Windows başlangıcına ekler
 - Her ikisini de hemen çalıştırır
+- Sonunda doğrulama raporu gösterir
 
 > **Not:** Bilgisayar yeniden başlatıldığında Service ve Tray uygulaması otomatik olarak başlar.
 
@@ -87,7 +95,13 @@ $Shortcut.Save()
 uninstall.bat → Sağ tık → Yönetici olarak çalıştır
 ```
 
-Bu script otomatik olarak Service'i, başlangıç kısayolunu, kurulum dosyalarını ve Registry kayıtlarını temizler.
+Bu script **yalnızca** kurulum dosyalarını kaldırır:
+- `C:\Program Files\AutoMuxSwitcher\` dizinini siler
+- Windows Service'i kaldırır
+- Başlangıç kısayolunu siler
+- Registry kayıtlarını temizler
+
+> **Proje kaynak kodlarına dokunmaz.**
 
 ### Manuel Kaldırma
 
@@ -105,20 +119,38 @@ Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\AutoMuxT
 # Registry'yi temizle
 Remove-Item "HKLM:\SOFTWARE\AutoMuxSwitcher" -ErrorAction SilentlyContinue
 
-# Kurulum dosyalarını sil (install.bat ile kurulduysa)
+# Kurulum dosyalarını sil
 Remove-Item "C:\Program Files\AutoMuxSwitcher" -Recurse -Force
 ```
 
 </details>
+
+## 📦 Dosya Yapısı
+
+```
+Auto-Mux-Switcher/
+├── install.bat          # Kurulum başlatıcı (→ install.ps1)
+├── install.ps1          # Kurulum scripti (PowerShell)
+├── uninstall.bat        # Kaldırma başlatıcı (→ uninstall.ps1)
+├── uninstall.ps1        # Kaldırma scripti (PowerShell)
+├── README.md
+├── AutoMuxSwitcher.slnx
+├── src/
+│   ├── AutoMuxService/  # Windows Service kaynak kodu
+│   └── AutoMuxTray/     # System Tray kaynak kodu
+└── publish/
+    ├── service/         # Derlenmiş Service dosyaları
+    └── tray/            # Derlenmiş Tray dosyaları
+```
 
 ## ⚙️ Teknik Detaylar
 
 - **Güç İzleme**: WMI (`Win32_PowerManagementEvent`) + P/Invoke polling (5 sn)
 - **GPU Kontrolü**: `pnputil.exe /disable-device` ve `/enable-device`
 - **GPU Durum İzleme**: WMI (`Win32_VideoController` + `Win32_PnPEntity`) — 30 sn periyodik kontrol
-- **IPC**: Named Pipes (`AutoMuxSwitcherPipe`) — retry mekanizmalı
+- **IPC**: Named Pipes (`AutoMuxSwitcherPipe`) — 3 denemeye kadar yeniden deneme
 - **Durum Saklama**: Windows Registry (`HKLM\SOFTWARE\AutoMuxSwitcher`)
-- **GPU Algılama**: WMI — NVIDIA/AMD otomatik algılama (devre dışı dahil)
+- **GPU Algılama**: WMI — NVIDIA/AMD otomatik algılama (Intel ve AMD APU iGPU atlanır)
 
 ## 📝 Lisans
 
